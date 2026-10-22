@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist-preview/
+.cache/
+public/models/*.onnx
+public/models/*.txt
+public/models/assets-lock.json
+public/vendor/ort/
+artifacts/
+*.log
+.DS_Store

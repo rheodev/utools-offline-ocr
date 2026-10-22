@@ -1,0 +1,25 @@
+{
+  "main": "index.html",
+  "logo": "logo.png",
+  "preload": "preload.js",
+  "pluginSetting": { "single": true, "height": 600 },
+  "features": [
+    {
+      "code": "ocr",
+      "description": "离线识别图片中的中英文，编辑并复制文字",
+      "platform": ["win32", "darwin"],
+      "cmds": [
+        "离线文字识别",
+        "离线OCR",
+        { "type": "img", "label": "离线识别图片文字" },
+        { "type": "files", "label": "离线识别图片文件", "fileType": "file", "extensions": ["png", "jpg", "jpeg", "webp", "bmp"], "minLength": 1, "maxLength": 1 }
+      ]
+    },
+    {
+      "code": "capture",
+      "description": "框选屏幕区域，离线识别文字",
+      "platform": ["win32", "darwin"],
+      "cmds": ["离线截图识别"]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "utools-offline-ocr",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "assets:prepare": "node scripts/prepare-assets.mjs",
+    "assets:check": "node scripts/check-assets.mjs",
+    "build": "npm run typecheck && npm run assets:check && vite build && node scripts/verify-build.mjs",
+    "build:ui": "npm run typecheck && vite build --outDir dist-preview",
+    "preview": "vite preview --outDir dist-preview --host 127.0.0.1",
+    "check": "npm run typecheck && npm test"
+  },
+  "dependencies": { "vue": "3.5.30" },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "5.2.4",
+    "typescript": "5.9.3",
+    "vite": "5.4.21",
+    "vue-tsc": "2.2.12"
+  }
+}
