@@ -1,67 +1,85 @@
-# uTools 离线文字识别
+# utools-offline-ocr
 
-Windows / macOS 的 uTools 插件。将横排印刷图片中的中英文转为可编辑、可复制的文字。
+[简体中文](README.md) · [English](README.en.md)
+
+适用于 uTools 的离线中英文 OCR 插件，基于 PaddleOCR 与 ONNX Runtime Web，图片在本地处理，无需上传。
+
+面向 Windows / macOS，将横排印刷图片中的文字转为可编辑、可复制的文本。
 
 ## 功能
 
-- 选择、拖放或粘贴单张图片，也可通过 uTools 框选截图。
-- 左侧预览原图，右侧编辑识别结果并一键复制。
-- 支持取消、重新识别、清空；模型会话复用，长图分块识别。
-- 图片上限 20 MB / 2000 万像素；支持 PNG、JPG、WebP、BMP。
-- 运行时只使用插件附带的本地资源，不上传图片，不保存历史。
+- **多种输入**：选择、拖放、粘贴单张图片，或通过 uTools 框选截图。
+- **识别与编辑**：左侧预览原图，右侧编辑结果并一键复制。
+- **任务控制**：取消、重新识别、清空；复用模型会话，长图分块处理。
+- **本地运行**：模型与运行资源随插件交付，不上传图片、不保存识别历史。
+- **图片支持**：PNG、JPG、WebP、BMP；单张不超过 20 MB / 2000 万像素。
 
-技术栈：Vue 3、TypeScript、Vite、ONNX Runtime Web 1.20.1、Web Worker。当前以 PP-OCRv4 轻量检测和识别模型作为基线；横排文字使用轴对齐后处理，不提供倾斜矫正、复杂分栏、表格或手写识别。
+## 界面预览
 
-## 开发与构建
+截图待补充：左侧为图片预览，右侧为文字编辑区。
 
-需要 Node.js 22.12 或以上。依赖安装和离线资源准备在**可联网的构建机**完成一次；最终用户使用插件不需要 Node.js、Python 或网络。
+<!-- 添加真实截图后，在这里插入仓库内的相对图片链接。 -->
+
+## 构建与安装
+
+构建环境需要 **Node.js 22.12 或以上**。依赖安装与离线资源准备需要联网；插件用户无需安装 Node.js 或 Python。
+
+在项目根目录执行：
 
 ```sh
-npm install
+npm ci
 npm run assets:prepare
 npm run check
 npm run build
 ```
 
-`assets:prepare` 下载约 15.6 MB 的两个模型、配套字典及固定版本 ONNX Runtime。模型检查固定 SHA-256，运行库检查 npm SRI，随后生成本地资源清单。最终体积以实际资源为准。
+资源准备脚本下载固定版本的 PP-OCRv4 检测、识别模型、配套字典与 ONNX Runtime Web，验证模型 SHA-256 和运行库 npm SRI，并生成本地资源清单。模型和运行库不纳入 Git。
 
-构建成功后，在 uTools「开发者工具」中选择 `dist/plugin.json` 导入。修改完成后重新构建并重新加载插件；可通过开发者工具打包为离线安装包。**仅有源码、`public/plugin.json` 或界面预览目录无法完成离线 OCR。**
+构建完成后：
 
-可用指令：
+1. 在 uTools「开发者工具」中选择 `dist/plugin.json` 导入。
+2. 修改源码后重新构建，并在 uTools 中重新加载插件。
+3. 如需分发，可通过 uTools 开发者工具打包为离线安装包。
 
-- `离线文字识别` / `离线OCR`：打开主界面。
-- `离线截图识别`：框选屏幕并识别。
-- 在 uTools 粘贴图片或选择一个图片文件后，选择对应的离线识别匹配指令。
+正式构建会检查模型、字典、WASM、资源清单和许可文件。仅有源码、`public/plugin.json` 或界面预览目录无法完成离线 OCR。
 
-macOS 首次截图需按系统提示为 uTools 授予屏幕录制权限。
+## 使用
 
-## 界面调试
+| 入口 | 操作 |
+| --- | --- |
+| `离线文字识别` / `离线OCR` | 打开主界面，选择、拖放或粘贴图片 |
+| `离线截图识别` | 框选屏幕区域并识别 |
+| uTools 图片匹配 | 粘贴图片后选择「离线识别图片文字」 |
+| uTools 文件匹配 | 选择单个图片文件后选择「离线识别图片文件」 |
+
+识别完成后可编辑文本并复制，也可取消任务、重新识别或清空。macOS 首次截图需按系统提示为 uTools 授予屏幕录制权限。
+
+## 开发
 
 ```sh
 npm run dev
 ```
 
-普通浏览器可测试文件选择、拖放、粘贴和文字编辑；uTools 截图与宿主入口需要在 uTools 内测试。要在浏览器中识别，也需要先准备完整离线资源。
+浏览器可调试文件选择、拖放、粘贴和文字编辑；识别需要先准备完整离线资源，截图与宿主入口需在 uTools 内测试。
 
-只构建界面以检查编译：
+| 命令 | 用途 |
+| --- | --- |
+| `npm run check` | 类型检查与自动化测试 |
+| `npm run assets:check` | 校验本地离线资源 |
+| `npm run build` | 构建并校验正式插件，输出 `dist/` |
+| `npm run build:ui` | 仅构建界面，输出 `dist-preview/` |
+| `npm run preview` | 预览 `dist-preview/` |
 
-```sh
-npm run build:ui
-npm run preview
-```
+`dist-preview/` 用于界面调试，不是正式插件包。
 
-输出为 `dist-preview/`，不是正式插件。正式 `npm run build` 会拒绝缺少模型、字典、WASM、资源清单或许可文件的构建。
+### 导入已有离线资源
 
-## 已有资源的离线导入
-
-可在另一台机器准备资源，再将其 `public` 目录复制过来：
+可在另一台机器运行资源准备脚本，再将准备好的 `public/` 目录复制到构建机：
 
 ```sh
 npm run assets:prepare -- --from /path/to/prepared-public
 npm run build
 ```
-
-资源目录结构：
 
 ```text
 public/
@@ -78,34 +96,34 @@ public/
     ONNX-Runtime-MIT.txt
 ```
 
-`--from` 会检查模型和资源格式并重新记录清单。请使用由本项目准备脚本生成的相同版本资源，不要混用不同版本的模型、字典、运行库 JS 与 WASM。
+`--from` 检查导入资源并重新生成清单。请使用本项目脚本准备的相同版本资源，不要混用模型、字典或运行库文件；依赖仍需提前安装。
 
-## 代码结构
+## 技术栈与目录
+
+Vue 3 · TypeScript · Vite · PaddleOCR PP-OCRv4 轻量模型 · ONNX Runtime Web 1.20.1 · WASM · Web Worker
 
 ```text
-public/plugin.json         uTools 指令与平台配置
-public/preload.js          本地文件、剪贴板、截图和资源桥接，按 CommonJS 原样交付
-public/package.json        指定插件目录为 CommonJS，避免继承开发项目的 ESM 配置
-src/App.vue                图片输入、预览、编辑和状态反馈
-src/ocr/client.ts          Worker 生命周期、取消和超时处理
-src/ocr/ocr.worker.ts      本地引擎初始化、检测和识别流水线
-src/ocr/processing.ts      归一化、横排检测后处理、CTC 和文字排序
-scripts/                   资源准备、完整性校验、正式构建验证
-tests/                     后处理、异步生命周期、桥接与资源校验测试
+src/App.vue             图片输入、预览、文本编辑与状态反馈
+src/ocr/                Worker 生命周期、模型推理与横排文字后处理
+public/plugin.json      uTools 指令与平台配置
+public/preload.js       本地文件、剪贴板、截图与资源桥接
+public/package.json     将插件目录指定为 CommonJS
+scripts/                资源准备、完整性校验与构建验证
+tests/                  后处理、任务生命周期、桥接与资源校验测试
 ```
 
-Worker 以内联 Blob 形式启动；uTools 中由 preload 读取本地模型与运行库字节，再转移给 Worker，避免依赖 `file://` 的 fetch 行为。浏览器调试时从同源静态目录读取资源。WASM 固定单线程，不要求宿主开启跨源隔离。
+Worker 以内联 Blob 启动。uTools 内由 preload 读取本地模型与运行库字节，再传给 Worker；浏览器调试从同源目录加载资源。WASM 固定单线程，不要求宿主开启跨源隔离。
 
-## 验收范围
+## 适用范围与验证
 
-自动化测试覆盖后处理、取消重试、资源校验和模拟宿主桥接，不代表真实 OCR 精度或跨平台验收。
+当前面向**横排印刷中英文**，使用轴对齐后处理；不提供倾斜矫正、复杂分栏、表格还原、公式、手写或 PDF 识别。
 
-发布前需在 Windows 与 macOS 的实际 uTools 内完成：
+自动化测试覆盖后处理、取消重试、资源校验和模拟宿主桥接，不代表真实 OCR 精度或 Windows / macOS 实机验收。发布前需在两平台的实际 uTools 内验证：
 
-1. 准备完整模型和运行库，正式构建、导入插件。
-2. 断网冷启动，测试文件、粘贴、截图及图片匹配入口。
-3. 使用实际中英文图片测试小字、深色背景、空白图与长图，记录耗时和准确率。
-4. 测试取消后重试、反复进入插件、编辑和复制，以及截图取消和 macOS 权限流程。
-5. 重新安装离线包后复测，确认无需首次下载。
+- 断网冷启动、文件/粘贴/截图/图片匹配入口及离线包重装。
+- 中英文、小字、深色背景、空白图和长图的准确率与耗时。
+- 取消后重试、反复进入插件、编辑复制、截图取消及 macOS 权限流程。
 
-第三方模型和组件来源、许可证见 `public/licenses/`。
+## 第三方许可
+
+模型与组件的来源和许可证见 [第三方说明](public/licenses/THIRD-PARTY.md) 及 [许可目录](public/licenses/)。
