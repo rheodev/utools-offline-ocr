@@ -5,5 +5,5 @@ export default defineConfig({
   base: './',
   plugins: [vue()],
   worker: { format: 'es' },
-  build: { target: 'chrome109', sourcemap: true },
+  build: { target: 'chrome109', sourcemap: false, emptyOutDir: true },
 })

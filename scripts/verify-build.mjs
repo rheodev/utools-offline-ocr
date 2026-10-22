@@ -5,6 +5,9 @@ import { checkAssets } from './check-assets.mjs'
 
 const directory = fileURLToPath(new URL('../dist/', import.meta.url))
 try {
+  const debugFiles = (await readdir(directory, { recursive: true }))
+    .filter(name => /\.(?:map|js\.gz)$/i.test(name))
+  if (debugFiles.length) throw new Error(`打包目录包含调试文件：${debugFiles.join('、')}`)
   await checkAssets(directory)
   const plugin = JSON.parse(await readFile(join(directory, 'plugin.json'), 'utf8'))
   if (!plugin.preload?.endsWith('.js')) throw new Error('uTools preload 必须使用 .js 文件')
