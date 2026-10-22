@@ -1,3 +1,5 @@
+import type { LocalizedMessage } from './i18n/messages'
+
 export interface TextBlock {
   text: string
   score: number
@@ -21,9 +23,9 @@ export type WorkerRequest =
 
 export type WorkerResponse =
   | { type: 'ready' }
-  | { type: 'progress'; message: string }
+  | { type: 'progress'; message: LocalizedMessage }
   | { type: 'result'; result: OcrResult }
-  | { type: 'error'; message: string }
+  | { type: 'error'; message: LocalizedMessage }
 
 export interface PluginAction {
   code: string

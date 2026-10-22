@@ -15,12 +15,12 @@ test('CTC 去掉连续重复与 blank，保留 blank 分隔的重复字和英文
 
 test('全 blank 返回空文本和零置信度；拒绝模型字典尺寸不匹配', () => {
   assert.deepEqual(decodeCTC(new Float32Array([1, 0, 1, 0]), 2, 2, ['', 'A']), { text: '', score: 0 })
-  assert.throws(() => decodeCTC(new Float32Array(6), 2, 3, ['', 'A']), /不匹配/)
+  assert.throws(() => decodeCTC(new Float32Array(6), 2, 3, ['', 'A']), { message: 'error.dictionaryMismatch' })
 })
 
 test('字典处理 BOM、CRLF 与尾换行，并保留字符顺序', () => {
   assert.deepEqual(parseDictionary('\uFEFF中\r\nA\r\n'), ['', '中', 'A', ' '])
-  assert.throws(() => parseDictionary('中\n\nA\n'), /字典无效/)
+  assert.throws(() => parseDictionary('中\n\nA\n'), { message: 'error.dictionary' })
 })
 
 test('RGBA 正确转为 CHW；分别使用检测和识别归一化', () => {
@@ -53,7 +53,7 @@ test('长截图和宽图片分块没有空隙，覆盖末端且不超过边界',
       assert.ok(tiles.some(t => x >= t.x && x < t.x + t.width && y >= t.y && y < t.y + t.height))
     }
   }
-  assert.throws(() => makeTiles(100, 100, 64, 64), /无效/)
+  assert.throws(() => makeTiles(100, 100, 64, 64), { message: 'error.tileSize' })
 })
 
 test('拒绝异常尺寸与超大图片', () => {
@@ -74,7 +74,7 @@ test('检测后处理过滤噪点和低置信度区域，扩张文本框并限�
   assert.equal(boxes[0].y, 0)
   assert.ok(boxes[0].width > 12 && boxes[0].height > 5)
   assert.ok(boxes[0].x + boxes[0].width <= width)
-  assert.throws(() => findTextRegions(heatmap, 1, 1), /不匹配/)
+  assert.throws(() => findTextRegions(heatmap, 1, 1), { message: 'error.detectorOutput' })
 })
 
 function block(text: string, x: number, y: number, score = 0.9): TextBlock {

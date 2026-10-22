@@ -1,8 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { OcrClient } from '../src/ocr/client.ts'
+import { errorMessage, translate, type LocalizedMessage } from '../src/i18n/messages.ts'
 
-function setup() {
+function setup(workerError?: string) {
   const originals = new Map<string, PropertyDescriptor | undefined>()
   for (const name of ['window', 'Worker', 'createImageBitmap']) originals.set(name, Object.getOwnPropertyDescriptor(globalThis, name))
   const workers: FakeWorker[] = []
@@ -18,7 +19,11 @@ function setup() {
       queueMicrotask(() => {
         if (this.terminated) return
         if (message.type === 'init') this.onmessage?.({ data: { type: 'ready' } })
-        else if (!this.hold) this.complete()
+        else {
+          this.onmessage?.({ data: { type: 'progress', message: { key: 'progress.tile', params: { current: 1, total: 3 } } } })
+          if (workerError) this.onmessage?.({ data: { type: 'error', message: { key: workerError } } })
+          else if (!this.hold) this.complete()
+        }
       })
     }
     complete() { this.onmessage?.({ data: { type: 'result', result: { text: '真实回传', blocks: [], elapsed: 1 } } }) }
@@ -65,7 +70,7 @@ test('取消资源加载后可马上重试，旧请求不会覆盖新请求的 b
     release({})
     const cancelled = await first
     assert.equal(cancelled.name, 'AbortError')
-    await assert.rejects(client.recognize(new Blob(['third']), () => {}), /另一张/)
+    await assert.rejects(client.recognize(new Blob(['third']), () => {}), { message: 'error.busy' })
     await new Promise(resolve => setTimeout(resolve, 0))
     fixture.workers[1].complete()
     assert.equal((await second).text, '真实回传')
@@ -78,9 +83,38 @@ test('资源缺失时返回可恢复错误并销毁 Worker', async () => {
   const client = fixture.client()
   try {
     fixture.host.loadAssets = async () => { throw new Error('ENOENT') }
-    await assert.rejects(client.recognize(new Blob(['image']), () => {}), /资源不完整/)
+    await assert.rejects(client.recognize(new Blob(['image']), () => {}), { message: 'error.assets' })
     assert.equal(fixture.workers[0].terminated, true)
     fixture.host.loadAssets = async () => ({})
     assert.equal((await client.recognize(new Blob(['image']), () => {})).text, '真实回传')
+  } finally { client.cancel(); fixture.restore() }
+})
+
+
+test('Worker 的结构化进度可在切换语言后重新渲染', async () => {
+  const fixture = setup()
+  const client = fixture.client()
+  try {
+    const progress: LocalizedMessage[] = []
+    await client.recognize(new Blob(['image']), message => progress.push(message))
+    assert.equal(progress[0].key, 'progress.loading')
+    const tile = progress.find(message => message.key === 'progress.tile')!
+    assert.equal(translate('en', tile), 'Recognizing image region 1 / 3…')
+    assert.equal(translate('zh-CN', tile), '正在识别第 1 / 3 个图片区域…')
+  } finally { client.cancel(); fixture.restore() }
+})
+
+test('Worker 错误经过客户端仍保留可翻译的标识，并销毁失效 Worker', async () => {
+  const fixture = setup('error.dictionaryMismatch')
+  const client = fixture.client()
+  try {
+    await assert.rejects(client.recognize(new Blob(['image']), () => {}), error => {
+      const message = errorMessage(error)
+      assert.equal(message.key, 'error.dictionaryMismatch')
+      assert.match(translate('en', message), /do not match/)
+      assert.match(translate('zh-CN', message), /不匹配/)
+      return true
+    })
+    assert.equal(fixture.workers[0].terminated, true)
   } finally { client.cancel(); fixture.restore() }
 })

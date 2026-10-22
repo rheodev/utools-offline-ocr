@@ -1,3 +1,4 @@
+import type { LocalizedMessage } from '../i18n/messages.ts'
 import type { AssetMap, OcrResult, WorkerRequest, WorkerResponse } from '../types'
 import { validateDimensions } from './processing.ts'
 
@@ -39,11 +40,11 @@ export class OcrClient {
     this.worker = undefined
     this.ready = false
     clearTimeout(this.timeout)
-    this.rejectPending?.(new DOMException('识别已取消', 'AbortError'))
+    this.rejectPending?.(new DOMException('status.cancelled', 'AbortError'))
     this.rejectPending = undefined
   }
 
-  private request<T extends 'ready' | 'result'>(request: WorkerRequest, expected: T, progress: (message: string) => void): Promise<Extract<WorkerResponse, { type: T }>> {
+  private request<T extends 'ready' | 'result'>(request: WorkerRequest, expected: T, progress: (message: LocalizedMessage) => void): Promise<Extract<WorkerResponse, { type: T }>> {
     return new Promise((resolve, reject) => {
       const worker = this.worker!
       const finish = () => {
@@ -56,19 +57,19 @@ export class OcrClient {
       const fail = (error: Error) => { finish(); reject(error) }
       const armTimeout = () => {
         clearTimeout(this.timeout)
-        this.timeout = setTimeout(() => fail(new Error('识别耗时过长，请裁剪图片后重试')), 120_000)
+        this.timeout = setTimeout(() => fail(new Error('error.timeout')), 120_000)
       }
       this.rejectPending = fail
       worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
         if (event.data.type === 'progress') { progress(event.data.message); armTimeout() }
-        else if (event.data.type === 'error') fail(new Error(event.data.message))
+        else if (event.data.type === 'error') fail(new Error(event.data.message.key))
         else if (event.data.type === expected) {
           finish()
           resolve(event.data as Extract<WorkerResponse, { type: T }>)
         }
       }
-      worker.onerror = event => { event.preventDefault(); fail(new Error('识别引擎无法启动，请重新安装插件或升级 uTools')) }
-      worker.onmessageerror = () => fail(new Error('图片传输失败，请重新选择图片'))
+      worker.onerror = event => { event.preventDefault(); fail(new Error('error.engine')) }
+      worker.onmessageerror = () => fail(new Error('error.transfer'))
       armTimeout()
       try {
         const transfers = request.type === 'init'
@@ -76,13 +77,13 @@ export class OcrClient {
           : [request.bitmap]
         worker.postMessage(request, transfers)
       } catch (error) {
-        fail(error instanceof Error ? error : new Error('识别请求失败'))
+        fail(error instanceof Error ? error : new Error('error.request'))
       }
     })
   }
 
-  async recognize(blob: Blob, progress: (message: string) => void): Promise<OcrResult> {
-    if (this.busy) throw new Error('正在识别另一张图片')
+  async recognize(blob: Blob, progress: (message: LocalizedMessage) => void): Promise<OcrResult> {
+    if (this.busy) throw new Error('error.busy')
     this.busy = true
     const operation = ++this.operation
     let bitmap: ImageBitmap | undefined
@@ -93,22 +94,22 @@ export class OcrClient {
         worker = await this.createWorker()
         if (operation !== this.operation) {
           worker.terminate()
-          throw new DOMException('识别已取消', 'AbortError')
+          throw new DOMException('status.cancelled', 'AbortError')
         }
         this.worker = worker
       }
       if (!this.ready) {
-        progress('首次识别，正在加载本地引擎…')
+        progress({ key: 'progress.loading' })
         let assets: AssetMap
         try { assets = await loadAssets() }
-        catch { throw new Error('识别资源不完整，请重新安装插件') }
-        if (this.worker !== worker) throw new DOMException('识别已取消', 'AbortError')
+        catch { throw new Error('error.assets') }
+        if (this.worker !== worker) throw new DOMException('status.cancelled', 'AbortError')
         await this.request({ type: 'init', assets }, 'ready', progress)
         this.ready = true
       }
       bitmap = await createImageBitmap(blob)
       validateDimensions(bitmap.width, bitmap.height)
-      if (this.worker !== worker) throw new DOMException('识别已取消', 'AbortError')
+      if (this.worker !== worker) throw new DOMException('status.cancelled', 'AbortError')
       const result = await this.request({ type: 'recognize', bitmap }, 'result', progress)
       return result.result
     } catch (error) {

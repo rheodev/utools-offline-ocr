@@ -1,25 +1,96 @@
 {
-  "name": "离线文字识别",
-  "source": "src/style.css",
-  "mode": "operate",
-  "verification": "source-only; visual browser verification pending",
-  "colors": {
-    "primary": "#17644d",
-    "background": "#f5f6f3",
-    "surface": "#ffffff",
-    "text": "#28342f",
-    "muted": "#65726b",
-    "border": "#dde3dc"
-  },
-  "typography": {
-    "title": { "fontSize": "19px", "fontWeight": 650, "lineHeight": 1.4 },
-    "body": { "fontSize": "14px", "lineHeight": 1.9 }
-  },
-  "rounded": { "button": "7px", "workspace": "10px" },
-  "spacing": { "small": "8px", "medium": "16px", "large": "24px" },
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T10:05:20.588919Z",
+  "title": "Design System: 离线文字识别",
   "extensions": {
-    "responsive": { "stackedAt": "680px" },
-    "motion": { "respectsReducedMotion": true },
-    "theme": "system light/dark"
-  }
+    "source": "src/style.css",
+    "mode": "operate",
+    "verification": {
+      "engine": "Chromium",
+      "checks": [
+        "语言检测、切换、持久化及 languagechange",
+        "进度和错误即时翻译，保留识别结果",
+        "中英文五种窗口宽度无横向溢出",
+        "浅色、深色及窄窗口截图复核"
+      ],
+      "widths": [
+        360,
+        680,
+        681,
+        800,
+        1024
+      ],
+      "host": "真实 uTools 宿主尚未验收"
+    },
+    "shadows": [
+      {
+        "name": "empty-image",
+        "value": "0 5px 14px #233c2a09",
+        "purpose": "空状态纸张插画的轻微抬升。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-transition",
+        "value": "background-color 140ms ease, border-color 140ms ease",
+        "purpose": "按钮背景与边框的状态切换。"
+      },
+      {
+        "name": "scan",
+        "value": "scan 1.2s ease-in-out infinite",
+        "purpose": "三条扫描指示条；后两条分别延迟 150ms、300ms。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stacked",
+        "value": "680px"
+      }
+    ],
+    "theme": "prefers-color-scheme: dark",
+    "reducedMotion": "prefers-reduced-motion: reduce 关闭所有动画与过渡。",
+    "focus": "2px solid var(--accent)，默认外偏移 3px，编辑器内偏移 -3px。"
+  },
+  "components": [
+    {
+      "name": "主按钮",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "对应现有界面的主按钮。",
+      "html": "<button class=\"ds-button-primary\">选择图片</button>",
+      "css": ".ds-button-primary{font:12px/1.5 -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:36px;padding:7px 12px;border:1px solid var(--line,#dde3dc);border-radius:7px;cursor:pointer;transition:background-color 140ms ease,border-color 140ms ease;background:var(--accent,#17644d);color:var(--surface,#ffffff);border-color:var(--accent,#17644d);}.ds-button-primary:hover{background:var(--accent-hover,#104e3b);border-color:var(--accent-hover,#104e3b);}.ds-button-primary:focus-visible{outline:2px solid var(--accent,#17644d);outline-offset:3px;}.ds-button-primary:disabled{opacity:.45;cursor:default;}@media(prefers-reduced-motion:reduce){.ds-button-primary{transition:none;}}"
+    },
+    {
+      "name": "次按钮",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "对应现有界面的次按钮。",
+      "html": "<button class=\"ds-button-secondary\">粘贴图片</button>",
+      "css": ".ds-button-secondary{font:12px/1.5 -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:36px;padding:7px 12px;border:1px solid var(--line,#dde3dc);border-radius:7px;cursor:pointer;transition:background-color 140ms ease,border-color 140ms ease;background:var(--surface,#ffffff);color:var(--ink,#28342f);}.ds-button-secondary:hover{background:var(--subtle,#f9faf7);border-color:var(--muted,#65726b);}.ds-button-secondary:focus-visible{outline:2px solid var(--accent,#17644d);outline-offset:3px;}.ds-button-secondary:disabled{opacity:.45;cursor:default;}@media(prefers-reduced-motion:reduce){.ds-button-secondary{transition:none;}}"
+    },
+    {
+      "name": "复制按钮",
+      "kind": "button",
+      "refersTo": "button-copy",
+      "description": "对应现有界面的复制按钮。",
+      "html": "<button class=\"ds-button-copy\">复制文字</button>",
+      "css": ".ds-button-copy{font:12px/1.5 -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:36px;padding:7px 12px;border:1px solid var(--line,#dde3dc);border-radius:7px;cursor:pointer;transition:background-color 140ms ease,border-color 140ms ease;min-height:30px;padding:4px 9px;background:var(--surface,#ffffff);color:var(--ink,#28342f);}.ds-button-copy:hover{background:var(--subtle,#f9faf7);border-color:var(--muted,#65726b);}.ds-button-copy:focus-visible{outline:2px solid var(--accent,#17644d);outline-offset:3px;}.ds-button-copy:disabled{opacity:.45;cursor:default;}@media(prefers-reduced-motion:reduce){.ds-button-copy{transition:none;}}"
+    },
+    {
+      "name": "语言选择",
+      "kind": "input",
+      "refersTo": "language-select",
+      "description": "轻量文字型原生语言选择，透明无边框，保留悬停和键盘焦点。",
+      "html": "<label>界面语言 <select class=\"ds-language\"><option>自动</option><option>简体中文</option><option>English</option></select></label>",
+      "css": ".ds-language{font:12px/1.5 -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:32px;padding:4px 6px;border:0;border-radius:6px;background:transparent;color:var(--muted,#65726b);cursor:pointer;}.ds-language:hover{background:var(--subtle,#f9faf7);color:var(--ink,#28342f);}.ds-language option{background:var(--surface,#ffffff);color:var(--ink,#28342f);}.ds-language:focus-visible{outline:2px solid var(--accent,#17644d);outline-offset:3px;}"
+    },
+    {
+      "name": "文字编辑器",
+      "kind": "input",
+      "refersTo": "text-editor",
+      "description": "可编辑的识别结果，保留正常文字粘贴。",
+      "html": "<textarea class=\"ds-editor\" aria-label=\"识别结果，可直接编辑\" placeholder=\"识别后的文字会显示在这里，可以直接修改、选择和复制。\" spellcheck=\"false\"></textarea>",
+      "css": ".ds-editor{font:14px/1.9 -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;width:100%;min-height:180px;padding:22px;border:0;border-radius:0;resize:none;background:var(--surface,#ffffff);color:var(--ink,#28342f);caret-color:var(--accent,#17644d);}.ds-editor::placeholder{color:var(--muted,#65726b);font-size:13px;line-height:2;opacity:1;}.ds-editor:focus-visible{outline:2px solid var(--accent,#17644d);outline-offset:-3px;}"
+    }
+  ]
 }

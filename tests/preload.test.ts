@@ -77,8 +77,8 @@ test('取消截图仍恢复窗口，空剪贴板返回 null', async () => {
 
 test('图片文件桥接拒绝相对路径和非图片扩展，读取后关闭句柄', async () => {
   const { host, events } = hostFixture()
-  await assert.rejects(host.readImageFile('relative.png'), /无效/)
-  await assert.rejects(host.readImageFile('/tmp/test.txt'), /请选择/)
+  await assert.rejects(host.readImageFile('relative.png'), { message: 'error.invalidPath' })
+  await assert.rejects(host.readImageFile('/tmp/test.txt'), { message: 'error.imageType' })
   const image = await host.readImageFile('/tmp/测试.PNG')
   assert.equal(image.name, '测试.PNG')
   assert.equal(image.dataUrl, 'data:image/png;base64,AQID')

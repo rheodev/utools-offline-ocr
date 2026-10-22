@@ -7,17 +7,17 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024
 
 export function validateDimensions(width: number, height: number) {
   if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width < 1 || height < 1) {
-    throw new Error('图片尺寸无效，请换一张图片')
+    throw new Error('error.dimensions')
   }
   if (width * height > MAX_IMAGE_PIXELS || width > 30_000 || height > 30_000) {
-    throw new Error('图片尺寸过大，请裁剪后重试（最多 2000 万像素）')
+    throw new Error('error.pixels')
   }
 }
 
 // 保留相邻切片的重叠区，避免文字刚好落在切片边缘被截断。
 export function makeTiles(width: number, height: number, size = 1536, overlap = 128): Rect[] {
   validateDimensions(width, height)
-  if (size <= overlap || overlap < 0) throw new Error('无效的分块尺寸')
+  if (size <= overlap || overlap < 0) throw new Error('error.tileSize')
   const offsets = (length: number) => {
     const result = [0]
     while (result[result.length - 1] + size < length) {
@@ -57,7 +57,7 @@ export function normalize(data: Uint8ClampedArray, mode: 'detection' | 'recognit
  * 第一版不做旋转文本的最小外接四边形/透视校正。
  */
 export function findTextRegions(probabilities: Float32Array, width: number, height: number): Rect[] {
-  if (probabilities.length !== width * height) throw new Error('检测模型输出尺寸不匹配')
+  if (probabilities.length !== width * height) throw new Error('error.detectorOutput')
   const visited = new Uint8Array(probabilities.length)
   const queue = new Int32Array(probabilities.length)
   const regions: Rect[] = []
@@ -92,7 +92,7 @@ export function findTextRegions(probabilities: Float32Array, width: number, heig
     const pad = w * h * 1.5 / (2 * (w + h))
     const x = Math.max(0, Math.floor(minX - pad)), y = Math.max(0, Math.floor(minY - pad))
     regions.push({ x, y, width: Math.min(width, Math.ceil(maxX + pad + 1)) - x, height: Math.min(height, Math.ceil(maxY + pad + 1)) - y })
-    if (regions.length > 1000) throw new Error('文字区域过多，请分区域截图识别')
+    if (regions.length > 1000) throw new Error('error.regions')
   }
   return regions
 }
@@ -100,13 +100,13 @@ export function findTextRegions(probabilities: Float32Array, width: number, heig
 export function parseDictionary(text: string) {
   const characters = text.replace(/^\uFEFF/, '').replace(/\r/g, '').split('\n')
   if (characters[characters.length - 1] === '') characters.pop()
-  if (!characters.length || characters.some(c => c === '')) throw new Error('识别字典无效')
+  if (!characters.length || characters.some(c => c === '')) throw new Error('error.dictionary')
   return ['', ...characters, ' ']
 }
 
 export function decodeCTC(data: Float32Array, steps: number, classes: number, dictionary: string[]) {
   if (classes !== dictionary.length || data.length !== steps * classes) {
-    throw new Error('识别模型与字典不匹配，请重新安装插件')
+    throw new Error('error.dictionaryMismatch')
   }
   let previous = -1, total = 0, count = 0, text = ''
   for (let t = 0; t < steps; t++) {

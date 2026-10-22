@@ -1,3 +1,4 @@
+import { errorMessage } from '../i18n/messages'
 import type { AssetMap, TextBlock, WorkerRequest, WorkerResponse } from '../types'
 import type { OrtRuntime, Session } from './runtime'
 import { arrangeBlocks, decodeCTC, detectionSize, findTextRegions, makeTiles, normalize, parseDictionary, validateDimensions } from './processing'
@@ -14,7 +15,7 @@ function send(message: WorkerResponse) { scope.postMessage(message) }
 async function initialize(assets: AssetMap) {
   const urls: string[] = []
   const blobUrl = (name: string, type: string) => {
-    if (!assets[name]?.length) throw new Error('识别资源不完整，请重新安装插件')
+    if (!assets[name]?.length) throw new Error('error.assets')
     const url = URL.createObjectURL(new Blob([assets[name]], { type }))
     urls.push(url)
     return url
@@ -42,7 +43,7 @@ async function initialize(assets: AssetMap) {
 function canvas(width: number, height: number) {
   const surface = new OffscreenCanvas(width, height)
   const context = surface.getContext('2d', { willReadFrequently: true })
-  if (!context) throw new Error('当前环境不支持图片处理，请升级 uTools')
+  if (!context) throw new Error('error.canvas')
   context.fillStyle = '#fff'
   context.fillRect(0, 0, width, height)
   return { surface, context }
@@ -71,17 +72,22 @@ async function recognize(bitmap: ImageBitmap) {
     const blocks: TextBlock[] = []
     for (let tileIndex = 0; tileIndex < tiles.length; tileIndex++) {
       const tile = tiles[tileIndex]
-      send({ type: 'progress', message: tiles.length > 1 ? `正在识别第 ${tileIndex + 1} / ${tiles.length} 个图片区域…` : '正在检测文字区域…' })
+      send({ type: 'progress', message: tiles.length > 1
+        ? { key: 'progress.tile', params: { current: tileIndex + 1, total: tiles.length } }
+        : { key: 'progress.detecting' } })
       const size = detectionSize(tile.width, tile.height)
       const detection = canvas(size.width, size.height)
       detection.context.drawImage(bitmap, tile.x, tile.y, tile.width, tile.height, 0, 0, size.width, size.height)
       const image = detection.context.getImageData(0, 0, size.width, size.height)
       const output = await infer(detector, normalize(image.data, 'detection'), size.width, size.height)
       const [batch, channels, height, width] = output.dims
-      if (output.dims.length !== 4 || batch !== 1 || channels !== 1) throw new Error('检测模型格式不兼容')
+      if (output.dims.length !== 4 || batch !== 1 || channels !== 1) throw new Error('error.detector')
       const regions = findTextRegions(output.data, width, height)
       for (let i = 0; i < regions.length; i++) {
-        send({ type: 'progress', message: `正在提取文字 ${i + 1} / ${regions.length}${tiles.length > 1 ? `（区域 ${tileIndex + 1} / ${tiles.length}）` : ''}…` })
+        send({ type: 'progress', message: {
+          key: tiles.length > 1 ? 'progress.textTile' : 'progress.text',
+          params: { current: i + 1, total: regions.length, tile: tileIndex + 1, tiles: tiles.length },
+        } })
         const region = regions[i]
         const x = tile.x + region.x * tile.width / width
         const y = tile.y + region.y * tile.height / height
@@ -91,7 +97,7 @@ async function recognize(bitmap: ImageBitmap) {
         const input = canvas(recWidth, 48)
         input.context.drawImage(bitmap, x, y, w, h, 0, 0, recWidth, 48)
         const rec = await infer(recognizer, normalize(input.context.getImageData(0, 0, recWidth, 48).data, 'recognition'), recWidth, 48)
-        if (rec.dims.length !== 3 || rec.dims[0] !== 1) throw new Error('识别模型格式不兼容')
+        if (rec.dims.length !== 3 || rec.dims[0] !== 1) throw new Error('error.recognizer')
         const result = decodeCTC(rec.data, rec.dims[1], rec.dims[2], dictionary)
         if (result.text.trim() && result.score >= 0.5) blocks.push({ ...result, x, y, width: w, height: h })
       }
@@ -108,11 +114,11 @@ scope.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   try {
     if (event.data.type === 'init') await initialize(event.data.assets)
     else {
-      if (!detector || !recognizer) throw new Error('识别引擎尚未就绪，请重试')
+      if (!detector || !recognizer) throw new Error('error.notReady')
       await recognize(event.data.bitmap)
     }
   } catch (error) {
-    send({ type: 'error', message: error instanceof Error ? error.message : '识别失败，请重试' })
+    send({ type: 'error', message: errorMessage(error, 'error.recognition') })
   } finally {
     running = false
   }

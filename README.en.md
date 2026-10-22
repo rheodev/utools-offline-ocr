@@ -12,6 +12,7 @@ Built for uTools on Windows and macOS. Extract editable, copyable text from imag
 - **Preview and edit**: view the original image on the left, edit recognized text on the right, and copy it with one click.
 - **Task controls**: cancel, retry, and clear; reuse model sessions and process long images in tiles.
 - **Local processing**: models and runtime assets ship with the plugin. Images are never uploaded, and recognition history is not saved.
+- **Bilingual interface**: Simplified Chinese and English, with automatic detection, manual switching, and saved preferences.
 - **Image support**: PNG, JPG, WebP, and BMP; up to 20 MB and 20 million pixels per image.
 
 ## Preview
@@ -45,7 +46,9 @@ Production builds check models, the dictionary, WASM, the asset manifest, and li
 
 ## Usage
 
-The plugin's commands and interface are currently in Chinese.
+Choose **Auto / 简体中文 / English** in the upper-right corner. Auto mode reads `navigator.language`: Chinese locales use Simplified Chinese; all other locales use English. This may differ from the uTools interface language. Switching immediately updates the interface, progress, and errors while preserving recognized text. The language preference is saved locally.
+
+Use `Offline OCR` to open the interface or `Capture OCR` to capture a screen region. Image and file matching entries have bilingual labels.
 
 | Entry | Action |
 | --- | --- |
